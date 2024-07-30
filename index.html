@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorías</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .header {
+            background-color: black;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .footer {
+            background-color: black;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>INGRESO DE <br> CATEGORÍAS <br></h1>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col text-end">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    Registrar nueva categoría
+                </button>
+            </div>
+        </div>
+        <hr>
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Registro</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="" method="post" id="frm_nueva_categoria">
+                            <label for=""><b>Nombre:</b></label>
+                            <br>
+                            <input type="text" name="name" id="name" class="form-control">
+                            <br>
+                            <label for=""><b>Descripción:</b></label>
+                            <br>
+                            <input type="text" name="description" id="description" class="form-control">
+                            <hr>
+                            <center>
+                                <button type="submit" class="btn btn-success">Guardar</button>
+                                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                            </center>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br><br>
+        <table class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody id="categories-tbody">
+                <tr>
+                    <td colspan="3">Cargando datos...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        Victor Chiguano
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $("#frm_nueva_categoria").on('submit', function(event) {
+                event.preventDefault();
+                $.ajax({
+                    url: 'http://54.234.163.74:3100/api/categories',
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        name: $("#name").val(),
+                        description: $("#description").val()
+                    }),
+                    success: function(data) {
+                        if (data.estado) {
+                            Swal.fire({
+                                title: "CONFIRMACIÓN",
+                                text: data.mensaje,
+                                icon: 'success'
+                            });
+                            $("#exampleModal").modal('hide');
+                            $("#frm_nueva_categoria")[0].reset();
+                            cargarCategorias();
+                        } else {
+                            Swal.fire({
+                                title: "Dato Guardado",
+                                text: data.mensaje,
+                                icon: 'success'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            title: "ERROR",
+                            text: "Hubo un problema con la solicitud.",
+                            icon: 'error'
+                        });
+                    }
+                });
+            });
+
+            function cargarCategorias() {
+                $.ajax({
+                    url: 'http://54.234.163.74:3100/api/categories',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (Array.isArray(data)) {
+                            let categoriesHTML = '';
+                            data.forEach(category => {
+                                categoriesHTML += `
+                                    <tr>
+                                        <td>${category.id}</td>
+                                        <td>${category.name}</td>
+                                        <td>${category.description}</td>
+                                    </tr>
+                                `;
+                            });
+                            $('#categories-tbody').html(categoriesHTML);
+                        } else {
+                            $('#categories-tbody').html('<tr><td colspan="3">No se encontraron datos</td></tr>');
+                        }
+                    },
+                    error: function() {
+                        $('#categories-tbody').html('<tr><td colspan="3">Error al cargar los datos</td></tr>');
+                    }
+                });
+            }
+
+            // Cargar categorías al inicio
+            cargarCategorias();
+        });
+    </script>
+</body>
+</html>
